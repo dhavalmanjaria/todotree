@@ -28,7 +28,7 @@ app.get('/api/', (req, res, next) => {
 
 
 // Create a new root level task
-app.post('/api/new', (req, res, next) => {
+app.route('/api/new').post((req, res, next) => {
     var newTask = new models.Task(req.body);
     
     newTask.parentId = 'ROOT';
@@ -43,13 +43,13 @@ app.post('/api/new', (req, res, next) => {
     }
 
     newTask.save()
-        .then(task => {
+        .then((task) => {
             res.send({'response': "Task saved to DB"})
         })
-        .catch(err => {
+        .catch((err) => {
             res.status(500).send({"response":"Unable to save to DB"});
         })
-    next();
+
 });
 
 app.route('/api/:parentId/new').post((req, res, next) => {
@@ -58,17 +58,16 @@ app.route('/api/:parentId/new').post((req, res, next) => {
     
     newTask.parentId = parentId;
 
-    models.Task.find({'taskId': parentId}).then((parentTask) => {
+    models.Task.findOne({'taskId': parentId}).then((parentTask) => {
         models.Task.find({ 'parentId': parentId})
             .sort({'taskId': 1})
             .exec((err, subTasks) => {
-                if (err) console.log(err);
+                if (err) console.error(err);
                 console.log("PARENT TASK:");
                 console.log(parentTask);
 
                 if (subTasks.length != 0) {
                     var lastTask = subTasks.slice(-1)[0];
-                    console.log("Last task:")
                     
                     // Get the taskId of the last task
                     var lastTaskIdArr = lastTask.taskId.split('-');
@@ -87,11 +86,21 @@ app.route('/api/:parentId/new').post((req, res, next) => {
                     newTask.taskId = parentId + '-1';
                 }
 
-                // task.children.push(newTask);
-                // task.save();
-
+				if (parentTask != null && typeof parentTask != "undefined") {
+					console.log("parent: " + typeof parentTask);
+					parentTask.children.push(newTask.taskId);
+			        parentTask.save()
+						.then(task => {
+							console.log(`${newTask.taskId} added to ${parentTask.taskId}`);
+						})
+						.catch(err => {
+							console.error("Error: Could not save parentTask children");
+							console.error(err.mesasage);
+						});	
+				}
                 newTask.save()
                     .then(task => {
+
                         res.send({'response': "Task saved to DB"})
                     })
                     .catch(err => {
@@ -99,7 +108,7 @@ app.route('/api/:parentId/new').post((req, res, next) => {
                     });
             });
     });    
-    })
+});
     
 
 
