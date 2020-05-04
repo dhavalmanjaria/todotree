@@ -4,6 +4,7 @@ let express = require('express');
 let path = require('path');
 let bodyParser = require('body-parser');
 let models = require('./models')
+let tools = require('./tools.js')
 
 let app = express();
 
@@ -109,7 +110,57 @@ app.route('/api/:parentId/new').post((req, res, next) => {
             });
     });    
 });
-    
+
+app.route('/api/:taskId/edit').post((req, res, next) => {
+
+        var taskId = req.params.taskId;
+        var task = models.Task.findOne({'taskId': taskId})
+			.then((task) => {
+				// This will update set all of 'task's field to the new ones in req.body
+	            // While also validating them.
+	            var updatedFields = req.body;
+				var validFields = tools.getModelFields(task);
+				
+	            Object.keys(updatedFields).forEach(field => {
+
+	            	if (validFields.includes(field)) {
+	                	task[field] = updatedFields[field];
+	                } else {
+	                	return res.send(
+	                    	{"response": `Error: ${field} not found in task. Valid fields are: 
+	                        	${JSON.parse(validFields)}`});
+	                        }
+					});
+
+	                task.save()
+						.then(task => {
+	                    return res.send({"response": "Task saved."});
+						})
+	                    .catch(err => {
+	                        console.log(err.message);
+	                		return res.send({"response": "Error: Task could not be saved."});
+						});
+            })
+			.catch(err => {
+				console.error(err.message);
+				console.error(err.stack);
+				res.status(404).send({"response": `Task ${taskId} not found`});
+			});
+	});
+
+app.route("/api/:taskId/delete").post((req, res, next) => {
+	var taskId = req.params.taskId;
+	models.Task.deleteOne({'taskId': taskId})
+		.then((task) => {
+			res.send({"response": `Task ${taskId} deleted`});
+		})
+		.catch(err => {
+			console.error(err.message);
+			console.error(err.stackTrace);
+			res.sendStatus(400).send({"response": `Task ${taskId} could not be deleted`});
+		});
+});
+
 
 
 

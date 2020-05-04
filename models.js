@@ -1,3 +1,5 @@
+"use strict";
+
 let db = require('./database');
 let mongoose = require('mongoose');
 
@@ -6,7 +8,8 @@ let taskSchema = mongoose.Schema({
 	taskId: String,
 	parentId: String,
 	description: String,
-	children: Array
+	children: Array,
+	done: Boolean
 }, { collection: 'tasks'} 
 );
 
