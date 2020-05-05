@@ -27,6 +27,51 @@ app.get('/api/', (req, res, next) => {
     
 });
 
+app.route('/api/getRecentTasks').get((req, res, next) => {
+	
+	var retval = {};
+	
+
+	// Return most recent task, sister tasks and parent.
+    models.Task.findOne({}).sort('-created')
+		.then(task => {
+			
+			retval['task'] = task._doc;
+			
+			var sisterTasks = [];
+			var taskId = task.taskId;
+			models.Task.find({'parentId': task.parentId, 'taskId': `^$task.taskId`})
+				.then(siblings => {
+					siblings.forEach(sibling => {
+						sisterTasks.push(sibling._doc);
+					});
+					retval['siblings'] = sisterTasks;
+					models.Task.findOne({'taskId': task.parentId})
+						.then(parent => {
+							retval['parent'] = parent._doc;
+							res.send(retval);
+						})
+						.catch(err =>{
+							console.error(err.message);
+							console.error(err.stack);
+							retval['parent'] = null;
+						});
+				})
+				.catch(err => {
+					console.error(err.message);
+					console.error(err.stack);
+					res.sendStatus(500)
+						.send({"response": `Error: Could not retrieve sister tasks for $taskId`})
+				});
+		})
+		.catch(err => {
+			console.error(err.message);
+			console.error(err.stack);
+			res.sendStatus(500)
+				.send({"response": `Error: Could not retrieve tasks`})
+		});    
+});
+
 
 // Create a new root level task
 app.route('/api/new').post((req, res, next) => {
@@ -43,6 +88,7 @@ app.route('/api/new').post((req, res, next) => {
             .send({"response": "Error: 'taskId' must be between 3 and 10 characters"});
     }
 
+	newTask.created = Date.now();
     newTask.save()
         .then((task) => {
             res.send({'response': "Task saved to DB"})
@@ -86,6 +132,8 @@ app.route('/api/:parentId/new').post((req, res, next) => {
                 } else {
                     newTask.taskId = parentId + '-1';
                 }
+
+				newTask.created = Date.now();
 
 				if (parentTask != null && typeof parentTask != "undefined") {
 					console.log("parent: " + typeof parentTask);

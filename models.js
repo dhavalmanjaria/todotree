@@ -9,7 +9,8 @@ let taskSchema = mongoose.Schema({
 	parentId: String,
 	description: String,
 	children: Array,
-	done: Boolean
+	done: Boolean,
+	created: Date
 }, { collection: 'tasks'} 
 );
 
