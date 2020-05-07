@@ -1,1 +1,13 @@
 /* You can add global styles to this file, and also import other style files */
+#main {
+    margin-top: 5rem;
+}
+
+.task-card {
+    width: 18rem;
+    margin: 1em;
+}
+
+.selectedTask {
+    border: 1px dashed #A41111;
+}

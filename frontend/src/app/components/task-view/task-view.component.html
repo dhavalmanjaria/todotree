@@ -1,0 +1,27 @@
+<div class="container" id="main">
+    <div class="card task-card">
+        <div class="card-body p-4">
+            <!-- TODO: add ngForm --> 
+            <form class="form" id="new-task-form">
+                <input type="text" name="new-task-title" placeholder="New Task Title" class="form-control m-2"/>
+
+                <textarea  name="new-task-description" placeholder="Description" class="form-control m-2"></textarea> 
+
+                <button type="submit" name="saveBtn" class="btn btn-sm btn-outline-dark form-control m-2">Save</button>
+            </form>
+
+        </div>
+
+    </div>
+
+    <app-task [task]="currentTask"></app-task>
+    <div class="d-inline-flex">
+        <app-task *ngFor="let sisterTask of siblings" [task]="sisterTask" (click)="onTaskSelected(sisterTask)" [ngClass]="sisterTask.taskId == selectedTaskId ? 'selectedTask': ''" class=""></app-task>
+    </div>
+
+    <app-task [task]="parentTask" (click)="onTaskSelected(parentTask)" [ngClass]="parentTask.taskId == selectedTaskId ? 'selectedTask' : ''" class='d-flex'>
+        
+    </app-task>
+
+
+</div>

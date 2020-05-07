@@ -5,12 +5,16 @@ let path = require('path');
 let bodyParser = require('body-parser');
 let models = require('./models')
 let tools = require('./tools.js')
+var cors = require('cors');
 
 let app = express();
 
 // Configure express app to parse json content and form data
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
+
+// CORS
+app.use(cors());
 
 // Configure app to serve static files from public folder
 app.use(express.static(path.join(__dirname, 'dist')));

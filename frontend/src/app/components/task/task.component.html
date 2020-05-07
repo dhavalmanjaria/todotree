@@ -1,25 +1,8 @@
-<div class="container" id="main">
-    <div class="card task-card">
-        <div class="card-body p-4">
-            <!-- TODO: add ngForm --> 
-            <form class="form" id="new-task-form">
-                <input type="text" name="new-task-title" placeholder="New Task Title" class="form-control m-2"/>
-
-                <textarea  name="new-task-description" placeholder="Description" class="form-control m-2"></textarea> 
-
-                <button type="submit" name="saveBtn" class="btn btn-sm btn-outline-dark form-control m-2">Save</button>
-            </form>
-
-        </div>
-
-    </div>
-
     <div class="card task-card">
         <div class="card-body">
-            <h5 class="card-title">Some Task</h5>
-            <p class="card-text">Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod
-            tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,
-            
+            <h5 class="card-title"><small>{{ task.taskId }}</small> {{ task.title }}</h5>
+            <p class="card-text">
+                {{ task.description }}
             </p>
             <a href="#" class="btn btn-outline-info">
                 Add Child
@@ -28,6 +11,4 @@
                 Go to parent
             </a>
         </div>
-
     </div>
-</div>
