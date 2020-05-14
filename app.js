@@ -3,8 +3,9 @@
 let express = require('express');
 let path = require('path');
 let bodyParser = require('body-parser');
-let models = require('./models')
-let tools = require('./tools.js')
+let models = require('./models');
+let tools = require('./tools.js');
+let dbapi = require('./dbapi.js');
 var cors = require('cors');
 
 let app = express();
@@ -31,6 +32,11 @@ app.get('/api/', (req, res, next) => {
     
 });
 
+
+// TODO refactoring:
+// Perhaps the return value is too specific and should
+// be more generic and UI agnostic so people can build different UIs
+// from it.
 app.route('/api/getRecentTasks').get((req, res, next) => {
 	
 	var retval = {};
@@ -42,32 +48,18 @@ app.route('/api/getRecentTasks').get((req, res, next) => {
 			
 			retval['task'] = task._doc;
 			
-			var sisterTasks = [];
-			var taskId = task.taskId;
-			models.Task.find({'parentId': task.parentId, 'taskId': `^$task.taskId`})
-				.then(siblings => {
-					siblings.forEach(sibling => {
-						sisterTasks.push(sibling._doc);
-					});
-					retval['siblings'] = sisterTasks;
-					models.Task.findOne({'taskId': task.parentId})
-						.then(parent => {
-							retval['parent'] = parent._doc;
-							res.send(retval);
-						})
-						.catch(err =>{
-							console.error(err.message);
-							console.error(err.stack);
-							retval['parent'] = null;
-						});
+			var taskFamily = dbapi.getTaskFamily(task)
+				.then(family => {
+					retval['siblings'] = family['siblings'];
+					retval['parent'] = family['parent'];
+					res.send(retval);					
 				})
 				.catch(err => {
 					console.error(err.message);
-					console.error(err.stack);
-					res.sendStatus(500)
-						.send({"response": `Error: Could not retrieve sister tasks for $taskId`})
+					console.error(err.stack)
 				});
-		})
+			}
+		)
 		.catch(err => {
 			console.error(err.message);
 			console.error(err.stack);
@@ -76,6 +68,34 @@ app.route('/api/getRecentTasks').get((req, res, next) => {
 		});    
 });
 
+
+app.route("/api/getTask/:taskId").get((req, res, next) => {
+	var retval = {};
+	
+	models.Task.findOne({'taskId': taskId})
+		.then(task => {
+			retval['task'] = task._doc;
+			
+			var taskFamily = dbapi.getTaskFamily(task)
+				.then(family => {
+					retval['siblings'] = family['siblings'];
+					retval['parent'] = family['parent'];
+					res.send(retval);					
+				})
+				.catch(err => {
+					console.error(err.message);
+					console.error(err.stack)
+				});
+			}
+		})
+		.catch(err => {
+			console.error(err.message);
+			console.error(err.stack);
+			res.sendStatus(500)
+				.send({"response": `Error: Could not retrieve tasks`})
+		});
+});
+		
 
 // Create a new root level task
 app.route('/api/new').post((req, res, next) => {
@@ -102,6 +122,7 @@ app.route('/api/new').post((req, res, next) => {
         })
 
 });
+
 
 app.route('/api/:parentId/new').post((req, res, next) => {
     var parentId = req.params.parentId;

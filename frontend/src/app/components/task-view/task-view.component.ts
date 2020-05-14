@@ -2,6 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { TaskComponent } from '../task/task.component';
 import { Task } from '../../classes/task';
 import { TaskViewService } from '../../services/task-view.service';
+import { FormControl } from '@angular/forms';
+
 
 @Component({
   selector: 'app-task-view',
@@ -15,27 +17,39 @@ export class TaskViewComponent implements OnInit {
   selectedTaskId = '';
   siblings = [];
 
+  title = new FormControl('');
+  description = new FormControl('');
+
   constructor(private taskServ: TaskViewService) { 
   }
-
-
 
   ngOnInit(): void {
 
       this.currentTask = new Task()
-      this.currentTask.taskId = 'tid-1';
-      this.currentTask.title = 'Current task';
-      this.parentTask.taskId = 'tid-p';
-      this.siblings = [
-          (new Task('Child 1','','tid-c-1' )),
-          (new Task('Child 2', '','tid-c-2'))
-      ];
+      this.getRecentTasks();
+    
+  }
 
+  getRecentTasks() {
       this.taskServ.getRecentTasks().subscribe(res => {
           if (res) {
               this.currentTask = res['task'];
               this.siblings = res['siblings'];
               this.parentTask = res['parent'];
+              this.selectedTaskId = this.currentTask.taskId;
+          } else {
+              console.log("res is not defined");
+          }
+      });
+  }
+
+  getTask(taskId: String) {
+      this.taskServ.getTask(taskId).subscribe(res => {
+          if (res) {
+              this.currentTask = res['task'];
+              this.siblings = res['siblings'];
+              this.parentTask = res['parent'];
+              this.selectedTaskId = this.currentTask.taskId;
           } else {
               console.log("res is not defined");
           }
@@ -47,4 +61,21 @@ export class TaskViewComponent implements OnInit {
       console.log(task.taskId);
   }
 
+
+  onSubmit() {
+    var parentId = this.selectedTaskId;
+    if (this.selectedTaskId == '') {
+      parentId = this.currentTask.taskId;
+    }
+
+    this.taskServ.addChild({
+        'title': this.title.value,
+        'description': this.description.value,
+        'parentId': this.selectedTaskId
+      }
+    ).subscribe((res) => {
+      console.log(res);
+      this.getRecentTasks();
+    })
+  }
 }
